@@ -1,32 +1,46 @@
-name: Lab 1 -ssh connection test
 
+name: Lab 1 - SSH connection test
 
 on:
- workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   connect:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout code
+      - name: Checkout code
         uses: actions/checkout@v6
-      - name: show all files on the runner 
+
+      - name: Show all files on the runner
         run: ls -lrth
 
-      - name: ssh in to ec2 and run commands 
+      - name: Verify EC2 host secret
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          if [ -z "$EC2_HOST" ]; then
+            echo "EC2_HOST secret is EMPTY"
+            exit 1
+          else
+            echo "EC2_HOST secret is configured"
+          fi
+
+      - name: SSH into EC2 and run commands
         uses: appleboy/ssh-action@v1
         with:
-           host: ${{ secrets.HOST }}
-           username: ${{ secrets.USERNAME }}
-           key: ${{ secrets.KEY }}
-           port: 22
-           script: 
-             whoami
-             pwd
-             ls -al
-             mkdir -p  praveen
-             echo "connect from github actions run ${{ github.run_number }}"
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            whoami
+            pwd
+            hostname
+            ls -al
+            mkdir -p prashant
+            echo "Connected from GitHub Actions"
+
             
            
   
