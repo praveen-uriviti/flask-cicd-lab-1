@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+$ cat README.md
+>>>>>>> origin/main
 # flask-cicd-lab
 
 Flask demo app for the GitHub Actions CI/CD labs (Dr. Prashant Dey).

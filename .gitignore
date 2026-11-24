@@ -1,6 +1,12 @@
 .venv/
 __pycache__/
+<<<<<<< HEAD
 .pytest_cache/
 *.pyc
 .env
 *.pem
+=======
+*.pyc
+.pytest_cache/
+*.pid
+>>>>>>> origin/main
