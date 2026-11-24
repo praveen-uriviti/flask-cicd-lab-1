@@ -27,7 +27,7 @@ jobs:
             pwd
             hostname
             ls -al
-            mkdir -p prashant
+            mkdir -p praveen
             echo "Connected from GitHub Actions"
 
             
