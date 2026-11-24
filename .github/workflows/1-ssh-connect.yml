@@ -15,17 +15,6 @@ jobs:
       - name: Show all files on the runner
         run: ls -lrth
 
-      - name: Verify EC2 host secret
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-        run: |
-          if [ -z "$EC2_HOST" ]; then
-            echo "EC2_HOST secret is EMPTY"
-            exit 1
-          else
-            echo "EC2_HOST secret is configured"
-          fi
-
       - name: SSH into EC2 and run commands
         uses: appleboy/ssh-action@v1
         with:
