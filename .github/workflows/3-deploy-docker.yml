@@ -35,22 +35,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Login into Docker Hub
+   
+      - name: Diagnose Docker Hub authentication
         env:
-          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DH_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DH_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          echo "Checking Docker credentials..."
+          set -euo pipefail
 
-          if [[ "$DOCKER_TOKEN" =~ [[:space:]] ]]; then
-            echo "Token contains whitespace"
-            exit 1
-          fi
+          echo "1. Checking Docker Hub credentials..."
 
-          printf '%s' "$DOCKER_TOKEN" | \
-            docker login \
-            --username "$DOCKER_USER" \
+          RESPONSE=$(curl -fsS \
+            -X POST https://hub.docker.com/v2/auth/token \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg user "$DH_USER" \
+              --arg token "$DH_TOKEN" \
+              '{identifier: $user, secret: $token}')")
+
+          echo "$RESPONSE" | jq -e '.access_token | strings | select(length > 0)' > /dev/null
+
+          echo "Docker Hub PAT authentication successful"
+
+          echo "2. Checking Docker Registry connection..."
+
+          curl -sS -D /tmp/registry-headers \
+            -o /tmp/registry-response \
+            https://registry-1.docker.io/v2/
+
+          head -n 1 /tmp/registry-headers
+
+          echo "3. Testing Docker login..."
+
+          printf '%s' "$DH_TOKEN" | \
+            docker login docker.io \
+            --username "$DH_USER" \
             --password-stdin
+
 
       - name: Build and push image
         uses: docker/build-push-action@v7
