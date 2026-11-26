@@ -1,0 +1,55 @@
+
+name: Lab 8 - Parallel checks
+
+on:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - run: pip install flake8
+
+      - name: Lint
+        run: flake8 app.py tests --max-line-length 100
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -v
+
+  image-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build the image (no push)
+        run: docker build -t flask-cicd-demo:ci --build-arg APP_VERSION=${{ github.sha }} .
+
+      - name: Run the container and call /health
+        run: |
+          docker run -d --name smoke -p 5000:5000 flask-cicd-demo:ci
+          sleep 5
+          curl --fail http://localhost:5000/health
+
+  all-checks-passed:
+    needs: [lint, test, image-smoke-test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All three checks passed for ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
