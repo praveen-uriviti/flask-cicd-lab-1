@@ -20,7 +20,7 @@ def greet():
     name = request.args.get("name", "").strip()
     if not name:
         return jsonify(error="name is required"), 400
-    return jsonify(message=f"HI, {name}!")
+    return jsonify(message=f"Hello, {name}!")
 
 
 @app.route("/api/add")
