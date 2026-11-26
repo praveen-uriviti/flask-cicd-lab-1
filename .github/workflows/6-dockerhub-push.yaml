@@ -8,7 +8,7 @@ on:
     paths-ignore: ['**.md']
 
 env:
-  IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/flask-cicd-demo
+  IMAGE: praveenuriviti/flask-cicd-demo
 
 jobs:
   test:
