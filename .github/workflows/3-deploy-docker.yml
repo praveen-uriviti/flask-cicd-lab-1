@@ -40,16 +40,17 @@ jobs:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          if [ -z "$DOCKER_USER" ] || [ -z "$DOCKER_TOKEN" ]; then
-            echo "Docker credentials are missing"
+          echo "Checking Docker credentials..."
+
+          if [[ "$DOCKER_TOKEN" =~ [[:space:]] ]]; then
+            echo "Token contains whitespace"
             exit 1
           fi
 
-          echo "Docker username is configured"
-          echo "Docker token is configured"
-
           printf '%s' "$DOCKER_TOKEN" | \
-            docker login -u "$DOCKER_USER" --password-stdin
+            docker login \
+            --username "$DOCKER_USER" \
+            --password-stdin
 
       - name: Build and push image
         uses: docker/build-push-action@v7
