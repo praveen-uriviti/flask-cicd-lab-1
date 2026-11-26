@@ -1,9 +1,9 @@
 
 name: Lab 2 - Test and deploy Flask to EC2
 on:
-  workflow_dispatch: push:
-    branches: [main]
-  workflow_dispatch:
+  #workflow_dispatch: push:
+  # branches: [main]
+#workflow_dispatch:
 
 jobs:
   test:
