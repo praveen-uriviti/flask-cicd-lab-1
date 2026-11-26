@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/flask-cicd-demo
+  IMAGE:  praveenuriviti/flask-cicd-lab-1
 
 jobs:
   test:
