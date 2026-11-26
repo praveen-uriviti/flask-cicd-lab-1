@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE:  praveenuriviti/flask-cicd-lab-1
+  IMAGE: praveenuriviti/flask-cicd-lab-1
 
 jobs:
   test:
@@ -35,13 +35,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-   
+      - name: Check Docker credentials
+        env:
+          USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "Username length: ${#USERNAME}"
+          echo "Token length: ${#TOKEN}"
+          echo "Token prefix: ${TOKEN:0:9}"
+
       - name: Login into Docker Hub
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
 
       - name: Build and push image
         uses: docker/build-push-action@v7
@@ -72,6 +79,7 @@ jobs:
             docker run -d --name flask-app --restart unless-stopped \
               -p 80:5000 "$IMAGE"
             sleep 5
-            curl --fail http://localhost/health
+            curl --fail --retry 5 --retry-delay 2 http://localhost/health
             docker image prune -f
+
 
