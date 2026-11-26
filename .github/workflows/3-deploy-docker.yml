@@ -2,7 +2,7 @@
 name: Lab 3 Test, Build Image and Deploy Container to EC2
 
 on:
-  push:
+ # push:
     branches: [main]
  # workflow_dispatch:
 
