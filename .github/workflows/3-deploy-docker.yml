@@ -10,7 +10,6 @@ env:
   IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/flask-cicd-demo
 
 jobs:
-
   test:
     runs-on: ubuntu-latest
     steps:
@@ -73,3 +72,4 @@ jobs:
             sleep 5
             curl --fail http://localhost/health
             docker image prune -f
+
