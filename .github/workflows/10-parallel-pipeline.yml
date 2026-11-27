@@ -8,7 +8,7 @@ on:
     paths-ignore: ['**.md']
 
 env:
-  DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/flask-cicd-demo
+  DOCKERHUB_IMAGE: praveenuriviti/flask-cicd-demo
   ECR_REPOSITORY: flask-cicd-demo
 
 jobs:
