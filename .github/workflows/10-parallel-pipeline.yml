@@ -1,0 +1,107 @@
+
+name: Lab 10 - Parallel checks and parallel pushes
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md']
+
+env:
+  DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/flask-cicd-demo
+  ECR_REPOSITORY: flask-cicd-demo
+
+jobs:
+  # ---------- Stage 1: three checks, side by side ----------
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - run: pip install flake8
+      - run: flake8 app.py tests --max-line-length 100
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+      - run: pytest -v
+
+  image-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - run: docker build -t flask-cicd-demo:ci .
+
+      - run: |
+          docker run -d --name smoke -p 5000:5000 flask-cicd-demo:ci
+          sleep 5
+          curl --fail http://localhost:5000/health
+
+  # ---------- Stage 2: two pushes, side by side ----------
+  push-dockerhub:
+    needs: [lint, test, image-smoke-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          build-args: APP_VERSION=${{ github.sha }}
+          tags: |
+            ${{ env.DOCKERHUB_IMAGE }}:latest
+            ${{ env.DOCKERHUB_IMAGE }}:${{ github.sha }}
+
+  push-ecr:
+    needs: [lint, test, image-smoke-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          build-args: APP_VERSION=${{ github.sha }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+  # ---------- Stage 3: one report ----------
+  report:
+    needs: [push-dockerhub, push-ecr]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "### Release ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Docker Hub: ${{ needs.push-dockerhub.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Amazon ECR: ${{ needs.push-ecr.result }}" >> "$GITHUB_STEP_SUMMARY"
